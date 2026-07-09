@@ -58,7 +58,7 @@ function providerEnvKey(providerName: ProviderName): string {
   return PROVIDER_ENV_KEY_PARTS[providerName].join('_')
 }
 
-function hasValue(value: string | undefined): boolean {
+function hasValue(value: string | undefined): value is string {
   return Boolean(value && value.trim() !== '')
 }
 
@@ -89,10 +89,10 @@ function resolveProviderName(config: AgentProviderConfig, selection: ProviderSel
 
 function buildMissingProviderCredentialMessage(providerName: ProviderName, wasExplicitlySelected: boolean): string {
   if (wasExplicitlySelected) {
-    return `Missing credential for provider "${providerName}". Set ${providerEnvKey(providerName)} or choose another configured provider.`
+    return `Missing provider setup for "${providerName}". Set ${providerEnvKey(providerName)} or choose another configured provider.`
   }
 
-  return `AI agent is disabled because no LLM provider credential is configured. Set ${providerEnvKey('openai')} or ${providerEnvKey('anthropic')} to enable AI agent invocations.`
+  return `AI agent is disabled because no LLM provider is configured. Set ${providerEnvKey('openai')} or ${providerEnvKey('anthropic')} to enable AI agent invocations.`
 }
 
 /**

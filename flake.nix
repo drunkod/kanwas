@@ -183,6 +183,21 @@ EOF
               export PGUSER="''${PGUSER:-kanwas}"
               export PGDATABASE="''${PGDATABASE:-kanwas}"
 
+              backend_pid=""
+              yjs_pid=""
+              frontend_pid=""
+              redis_pid=""
+
+              cleanup() {
+                for pid in "$backend_pid" "$yjs_pid" "$frontend_pid" "$redis_pid"; do
+                  if [ -n "$pid" ]; then
+                    kill "$pid" 2>/dev/null || true
+                  fi
+                done
+                pg_ctl -D "$PGDATA" stop -m fast >/dev/null 2>&1 || true
+              }
+              trap cleanup EXIT INT TERM
+
               mkdir -p "$KANWAS_NIX_DATA_DIR" "$KANWAS_NIX_DATA_DIR/redis"
               kanwas-init-local
               corepack enable >/dev/null 2>&1 || true
@@ -197,13 +212,6 @@ EOF
               pg_ctl -D "$PGDATA" -l "$KANWAS_NIX_DATA_DIR/postgres.log" -o "-h $PGHOST -p $PGPORT -k $pg_socket_dir" start
               redis-server --dir "$KANWAS_NIX_DATA_DIR/redis" --port 6379 --save "" --appendonly no > "$KANWAS_NIX_DATA_DIR/redis.log" 2>&1 &
               redis_pid=$!
-
-              cleanup() {
-                jobs -p | xargs -r kill 2>/dev/null || true
-                kill "$redis_pid" 2>/dev/null || true
-                pg_ctl -D "$PGDATA" stop -m fast >/dev/null 2>&1 || true
-              }
-              trap cleanup EXIT INT TERM
 
               until pg_isready -h "$PGHOST" -p "$PGPORT" -U kanwas >/dev/null 2>&1; do
                 sleep 0.2

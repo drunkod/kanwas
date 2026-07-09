@@ -31,6 +31,7 @@
             nodejs_24
             openssl
             pkg-config
+            pnpm
             postgresql_17
             python3
             redis
@@ -169,6 +170,7 @@ EOF
             runtimeInputs = with pkgs; [
               corepack
               nodejs_24
+              pnpm
               postgresql_17
               redis
               initLocal

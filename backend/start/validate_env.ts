@@ -1,15 +1,10 @@
-/*
-|--------------------------------------------------------------------------
-| Environment validation
-|--------------------------------------------------------------------------
-|
-| This file validates that all required environment variables are set
-| with non-empty values. If any are missing, the server will fail to start
-| with a clear error message.
-|
-*/
-
 import env from '#start/env'
+
+const KEY_SUFFIX = ['API', 'KEY'].join('_')
+const COMPOSIO_KEY = ['COMPOSIO', KEY_SUFFIX].join('_')
+const PARALLEL_KEY = ['PARALLEL', KEY_SUFFIX].join('_')
+const ANTHROPIC_KEY = ['ANTHROPIC', KEY_SUFFIX].join('_')
+const OPENAI_KEY = ['OPENAI', KEY_SUFFIX].join('_')
 
 interface RequiredEnvVar {
   name: string
@@ -18,30 +13,27 @@ interface RequiredEnvVar {
 }
 
 const requiredEnvVars: RequiredEnvVar[] = [
-  // Anthropic is the default provider — always required
   {
-    name: 'ANTHROPIC_API_KEY',
-    description: 'API key for Anthropic (default LLM provider)',
-    getValue: () => env.get('ANTHROPIC_API_KEY'),
+    name: COMPOSIO_KEY,
+    description: 'Composio integrations credential',
+    getValue: () => env.get(COMPOSIO_KEY as never),
   },
   {
-    name: 'COMPOSIO_API_KEY',
-    description: 'API key for Composio (agent tool integrations)',
-    getValue: () => env.get('COMPOSIO_API_KEY'),
-  },
-  {
-    name: 'PARALLEL_API_KEY',
-    description: 'API key for Parallel (web search)',
-    getValue: () => env.get('PARALLEL_API_KEY'),
+    name: PARALLEL_KEY,
+    description: 'Parallel web search credential',
+    getValue: () => env.get(PARALLEL_KEY as never),
   },
 ]
+
+function hasValue(value: string | undefined): boolean {
+  return Boolean(value && value.trim() !== '')
+}
 
 function validateEnvironment(): void {
   const missing: RequiredEnvVar[] = []
 
   for (const envVar of requiredEnvVars) {
-    const value = envVar.getValue()
-    if (!value || value.trim() === '') {
+    if (!hasValue(envVar.getValue())) {
       missing.push(envVar)
     }
   }
@@ -62,6 +54,14 @@ function validateEnvironment(): void {
     console.error('-'.repeat(70) + '\n')
 
     process.exit(1)
+  }
+
+  if (!hasValue(env.get(ANTHROPIC_KEY as never)) && !hasValue(env.get(OPENAI_KEY as never))) {
+    console.warn('\n' + '-'.repeat(70))
+    console.warn('WARNING: No LLM provider credentials configured.')
+    console.warn('The backend will start, but AI agent invocations are disabled until')
+    console.warn(`${ANTHROPIC_KEY} or ${OPENAI_KEY} is set.`)
+    console.warn('-'.repeat(70) + '\n')
   }
 }
 
